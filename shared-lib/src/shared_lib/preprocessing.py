@@ -2,6 +2,10 @@ import re
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.base import BaseEstimator, TransformerMixin
+
 
 nltk.download("stopwords")
 nltk.download("wordnet")
@@ -30,3 +34,22 @@ def preprocess_text(text: str) -> str:
     lemmatizer = WordNetLemmatizer()
     tokens = [lemmatizer.lemmatize(word) for word in tokens]
     return " ".join(tokens)
+
+
+class TextPreprocessingTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        X_transformed = []
+        for text in X:
+            X_transformed.append(preprocess_text(text))
+        return np.array(X_transformed)
+
+preprocess_pipeline = Pipeline([
+    ("preprocess", TextPreprocessingTransformer()),
+    ("vectorization", TfidfVectorizer(ngram_range=(1, 2),stop_words="english")),
+])
