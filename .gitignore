@@ -208,3 +208,6 @@ __marimo__/
 
 # Idea
 .idea/
+
+# ml_training
+ml_training/datasets/
