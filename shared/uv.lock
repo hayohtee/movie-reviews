@@ -92,11 +92,15 @@ name = "shared"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "joblib" },
     { name = "nltk" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "nltk", specifier = ">=3.9.4" }]
+requires-dist = [
+    { name = "joblib", specifier = ">=1.5.3" },
+    { name = "nltk", specifier = ">=3.9.4" },
+]
 
 [[package]]
 name = "tqdm"
