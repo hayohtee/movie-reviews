@@ -7,7 +7,7 @@ def save_model(model, model_name: str, model_dir: Path = DEFAULT_MODEL_DIR):
     model_dir.mkdir(parents=True, exist_ok=True)
     path = model_dir / f"{model_name}.pkl"
     with open(path, "wb") as f:
-        dill.dump(model, f, compress=3)
+        dill.dump(model, f)
     print(f"Model saved to {path}")
 
 def load_model(name: str, model_dir: Path = DEFAULT_MODEL_DIR):
