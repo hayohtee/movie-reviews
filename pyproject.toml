@@ -1,5 +1,5 @@
 [project]
-name = "movies-reviews"
+name = "movie-reviews"
 version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
@@ -7,4 +7,8 @@ dependencies = [
     "numpy>=2.4.4",
     "scikit-learn>=1.8.0",
     "nltk>=3.9.4",
+    "skl2onnx>=1.20.0",
+    "joblib>=1.5.3",
+    "fastapi[standard]>=0.136.0",
+    "pydantic>=2.13.2",
 ]
