@@ -19,6 +19,7 @@ class SentimentResult(BaseModel):
     positive_probability: Optional[float] = None
     negative_probability: Optional[float] = None
     processing_time_ms: float
+    preprocessed_text: str
 
 
 class BatchResult(BaseModel):

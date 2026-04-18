@@ -32,12 +32,15 @@ def predict_review(text: str, return_probs: bool) -> SentimentResult:
     sentiment = "positive" if label_idx == 1 else "negative"
     confidence = float(proba[label_idx])
 
+    preprocessed_text = model.named_steps["preprocess"].named_steps["text_preprocessing"].transform([text])
+
     return SentimentResult(
         sentiment=sentiment,
         confidence=round(confidence, 4),
         positive_probability=round(float(proba[1]), 4) if return_probs else None,
         negative_probability=round(float(proba[0]), 4) if return_probs else None,
         processing_time_ms=round((time.perf_counter() - t0) * 1000, 2),
+        preprocessed_text=preprocessed_text[0]
     )
 
 

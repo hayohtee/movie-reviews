@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Movie Review Sentiment Analyser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap"
+          rel="stylesheet"/>
+
+    <style>
+        /* ── Reset ─────────────────────────────────────────── */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ── Tokens ────────────────────────────────────────── */
+        :root {
+            --ink: #0d0d0d;
+            --ink-mid: #4a4a4a;
+            --ink-light: #9a9a9a;
+            --paper: #faf9f7;
+            --rule: rgba(13, 13, 13, .10);
+            --rule-mid: rgba(13, 13, 13, .22);
+            --serif: 'DM Serif Display', Georgia, serif;
+            --sans: 'DM Sans', system-ui, sans-serif;
+            --mono: 'DM Mono', 'Fira Code', monospace;
+            --radius: 4px;
+            --transition: 0.2s ease;
+        }
+
+        /* ── Base ──────────────────────────────────────────── */
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--sans), sans-serif;
+            background: var(--paper);
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Page entry animation ──────────────────────────── */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeUp 0.55s ease both;
+        }
+
+        .delay-1 {
+            animation-delay: 0.08s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.16s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.24s;
+        }
+
+        .delay-4 {
+            animation-delay: 0.32s;
+        }
+
+        /* ── Layout ────────────────────────────────────────── */
+        .page {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ── Header ────────────────────────────────────────── */
+        header {
+            padding: 56px 0 40px;
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .eyebrow {
+            font-family: var(--mono), sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--ink-light);
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            font-family: var(--serif), serif;
+            font-size: clamp(2rem, 6vw, 3.2rem);
+            font-weight: 400;
+            line-height: 1.12;
+            letter-spacing: -0.01em;
+            color: var(--ink);
+        }
+
+        h1 em {
+            font-style: italic;
+            color: var(--ink-mid);
+        }
+
+        .subtitle {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 300;
+            color: var(--ink-light);
+            line-height: 1.6;
+        }
+
+        /* ── Main ──────────────────────────────────────────── */
+        main {
+            padding: 40px 0 60px;
+            flex: 1;
+        }
+
+        /* ── Section label ─────────────────────────────────── */
+        .label {
+            font-family: var(--mono), sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--ink-light);
+            margin-bottom: 10px;
+        }
+
+        /* ── Textarea ──────────────────────────────────────── */
+        .input-wrap {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 160px;
+            resize: vertical;
+            font-family: var(--sans), sans-serif;
+            font-size: 15px;
+            font-weight: 300;
+            line-height: 1.7;
+            color: var(--ink);
+            background: transparent;
+            border: 1px solid var(--rule-mid);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            outline: none;
+            transition: border-color var(--transition);
+            caret-color: var(--ink);
+        }
+
+        textarea::placeholder {
+            color: var(--ink-light);
+            font-weight: 300;
+        }
+
+        textarea:focus {
+            border-color: var(--ink);
+        }
+
+        .char-count {
+            position: absolute;
+            bottom: 12px;
+            right: 14px;
+            font-family: var(--mono),sans-serif;
+            font-size: 11px;
+            color: var(--ink-light);
+            pointer-events: none;
+        }
+
+        /* ── Example chips ─────────────────────────────────── */
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .chip {
+            font-family: var(--mono),sans-serif;
+            font-size: 11px;
+            font-weight: 400;
+            padding: 5px 12px;
+            border: 1px solid var(--rule-mid);
+            border-radius: 2px;
+            background: transparent;
+            color: var(--ink-mid);
+            cursor: pointer;
+            transition: all var(--transition);
+            letter-spacing: 0.02em;
+        }
+
+        .chip:hover {
+            background: var(--ink);
+            color: var(--paper);
+            border-color: var(--ink);
+        }
+
+        /* ── Controls row ──────────────────────────────────── */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            font-family: var(--sans),sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            padding: 10px 24px;
+            background: var(--ink);
+            color: var(--paper);
+            border: 1px solid var(--ink);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.82;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-ghost {
+            font-family: var(--sans),sans-serif;
+            font-size: 13px;
+            font-weight: 400;
+            padding: 10px 18px;
+            background: transparent;
+            color: var(--ink-mid);
+            border: 1px solid var(--rule);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--rule-mid);
+            color: var(--ink);
+        }
+
+        .shortcut-hint {
+            margin-left: auto;
+            font-family: var(--mono),sans-serif;
+            font-size: 11px;
+            color: var(--ink-light);
+        }
+
+        /* ── Spinner ───────────────────────────────────────── */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 1.5px solid var(--rule-mid);
+            border-top-color: var(--ink);
+            border-radius: 50%;
+            animation: spin 0.65s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── Divider ───────────────────────────────────────── */
+        .rule {
+            border: none;
+            border-top: 1px solid var(--rule);
+            margin: 36px 0;
+        }
+
+        /* ── Result panel ──────────────────────────────────── */
+        #result-panel {
+            display: none;
+        }
+
+        @keyframes revealPanel {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #result-panel.visible {
+            display: block;
+            animation: revealPanel 0.35s ease both;
+        }
+
+        /* Verdict row */
+        .verdict-row {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .verdict-label {
+            font-family: var(--serif),serif;
+            font-size: clamp(1.8rem, 5vw, 2.6rem);
+            font-weight: 400;
+            letter-spacing: -0.01em;
+        }
+
+        .verdict-label.positive {
+            color: var(--ink);
+        }
+
+        .verdict-label.negative {
+            color: var(--ink-mid);
+        }
+
+        .confidence-pill {
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 3px 9px;
+            border: 1px solid var(--rule-mid);
+            border-radius: 2px;
+            color: var(--ink-light);
+        }
+
+        /* Bar rows */
+        .bar-row {
+            margin-bottom: 18px;
+        }
+
+        .bar-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .bar-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--ink-mid);
+            letter-spacing: 0.02em;
+        }
+
+        .bar-pct {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--ink-light);
+        }
+
+        .bar-track {
+            height: 2px;
+            background: var(--rule);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--ink);
+            border-radius: 1px;
+            width: 0%;
+            transition: width 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bar-fill.light {
+            background: var(--ink-light);
+        }
+
+        /* Preprocessed */
+        .preprocessed-block {
+            margin-top: 24px;
+            padding: 14px 16px;
+            border: 1px solid var(--rule);
+            border-radius: var(--radius);
+            background: rgba(13, 13, 13, .02);
+        }
+
+        .preprocessed-block .label {
+            margin-bottom: 6px;
+        }
+
+        .preprocessed-text {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--ink-mid);
+            line-height: 1.7;
+            word-break: break-word;
+        }
+
+        /* ── Error ─────────────────────────────────────────── */
+        .error-msg {
+            display: none;
+            margin-top: 14px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--ink-mid);
+            padding: 10px 14px;
+            border: 1px solid var(--rule-mid);
+            border-radius: var(--radius);
+            border-left: 3px solid var(--ink);
+        }
+
+        /* ── History ───────────────────────────────────────── */
+        #history-panel {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .history-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--rule);
+            cursor: pointer;
+            transition: opacity var(--transition);
+        }
+
+        .history-row:last-child {
+            border-bottom: none;
+        }
+
+        .history-row:hover {
+            opacity: 0.6;
+        }
+
+        .history-text {
+            font-size: 13px;
+            font-weight: 300;
+            color: var(--ink-mid);
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .history-badge {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border: 1px solid var(--rule-mid);
+            border-radius: 2px;
+            color: var(--ink-light);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .history-badge.positive {
+            color: var(--ink);
+            border-color: var(--ink-mid);
+        }
+
+        /* ── Footer ────────────────────────────────────────── */
+        footer {
+            border-top: 1px solid var(--rule);
+            padding: 20px 0;
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .footer-text {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--ink-light);
+            letter-spacing: 0.04em;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--ink-light);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--ink-light);
+            transition: background var(--transition);
+        }
+
+        .status-dot.online {
+            background: var(--ink);
+        }
+
+        /* ── Responsive ────────────────────────────────────── */
+        @media (max-width: 480px) {
+            header {
+                padding: 36px 0 28px;
+            }
+
+            .shortcut-hint {
+                display: none;
+            }
+
+            .controls {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+
+    <!-- Header -->
+    <header>
+        <h1 class="fade-up">ML · Sentiment Analysis</h1>
+        <p class="subtitle fade-up delay-2">Paste any movie review and the model will classify its sentiment, show
+            confidence scores.</p>
+    </header>
+
+    <!-- Main -->
+    <main>
+
+        <!-- Input -->
+        <section class="fade-up delay-3" aria-label="Review input">
+            <p class="label">Your review</p>
+            <div class="input-wrap">
+          <textarea
+                  id="review-input"
+                  placeholder="This film was a revelation — the kind of cinema that stays with you long after the credits roll…"
+                  aria-label="Movie review text"
+                  spellcheck="true"
+          ></textarea>
+                <span class="char-count" id="char-count" aria-live="polite"></span>
+            </div>
+
+            <div class="chips" role="list" aria-label="Example reviews">
+                <button class="chip" role="listitem" onclick="setExample(0)">01 — Glowing</button>
+                <button class="chip" role="listitem" onclick="setExample(1)">02 — Scathing</button>
+                <button class="chip" role="listitem" onclick="setExample(2)">03 — Ambivalent</button>
+                <button class="chip" role="listitem" onclick="setExample(3)">04 — Masterpiece</button>
+            </div>
+
+            <div class="controls">
+                <button class="btn-primary" id="analyse-btn" onclick="analyse()" disabled
+                        aria-label="Analyse sentiment">
+                    Analyse
+                </button>
+                <button class="btn-ghost" onclick="clearAll()">Clear</button>
+                <div class="spinner" id="spinner" role="status" aria-label="Analysing…"></div>
+                <span class="shortcut-hint">⌘ + ↵</span>
+            </div>
+
+            <div class="error-msg" id="error-msg" role="alert"></div>
+        </section>
+
+        <!-- Result -->
+        <div id="result-panel" aria-live="polite" aria-label="Analysis result">
+            <hr class="rule"/>
+
+            <div class="verdict-row">
+                <span class="verdict-label" id="verdict-label">Positive</span>
+                <span class="confidence-pill" id="confidence-pill">96% confident</span>
+            </div>
+
+            <div class="bar-row">
+                <div class="bar-meta">
+                    <span class="bar-name">Positive</span>
+                    <span class="bar-pct" id="pos-pct">—</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill" id="pos-bar"></div>
+                </div>
+            </div>
+
+            <div class="bar-row">
+                <div class="bar-meta">
+                    <span class="bar-name">Negative</span>
+                    <span class="bar-pct" id="neg-pct">—</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill light" id="neg-bar"></div>
+                </div>
+            </div>
+
+            <div class="preprocessed-block">
+                <p class="label">Preprocessed tokens</p>
+                <p class="preprocessed-text" id="preprocessed-text"></p>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div id="history-panel">
+            <hr class="rule"/>
+            <p class="label">Session history</p>
+            <div id="history-list" role="list"></div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Footer -->
+<footer>
+    <div class="page">
+        <div class="footer-inner">
+            <span class="footer-text">TF-IDF · SDGClassifier · scikit-learn</span>
+            <div class="api-status" id="api-status">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">checking api…</span>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    /* ── Config ──────────────────────────────────────── */
+    const API_BASE = 'http://127.0.0.1:8000';
+
+    /* ── Examples ────────────────────────────────────── */
+    const EXAMPLES = [
+        "An absolute joy to watch. The direction was sharp, the performances electric, and the story kept me gripped from the very first frame to the last. Rarely does a film deliver on every level like this one does.",
+        "A crushing disappointment. The trailer promised something bold and original, but what ended up on screen was a meandering, self-indulgent mess that tested my patience at every turn. Avoid.",
+        "There are flashes of brilliance scattered throughout — a stunning second act, a career-best performance from the lead — but the film never quite coheres into something worthy of its ambitions. Interesting, not great.",
+        "One of the finest films I have seen in years. Every frame is deliberate, every line of dialogue earned. It is the kind of filmmaking that reminds you why cinema exists. An utter masterpiece."
+    ];
+
+    /* ── State ───────────────────────────────────────── */
+    const history = [];
+
+    /* ── Elements ────────────────────────────────────── */
+    const input = document.getElementById('review-input');
+    const btn = document.getElementById('analyse-btn');
+    const charEl = document.getElementById('char-count');
+    const spinner = document.getElementById('spinner');
+    const errorEl = document.getElementById('error-msg');
+    const resultEl = document.getElementById('result-panel');
+    const histPanel = document.getElementById('history-panel');
+    const histList = document.getElementById('history-list');
+
+    /* ── Input handling ──────────────────────────────── */
+    input.addEventListener('input', () => {
+        const len = input.value.trim().length;
+        btn.disabled = len < 5;
+        charEl.textContent = len > 0 ? len : '';
+    });
+
+    input.addEventListener('keydown', e => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') analyse();
+    });
+
+    /* ── Examples ────────────────────────────────────── */
+    function setExample(i) {
+        input.value = EXAMPLES[i];
+        input.dispatchEvent(new Event('input'));
+        input.focus();
+        hideError();
+    }
+
+    /* ── Clear ───────────────────────────────────────── */
+    function clearAll() {
+        input.value = '';
+        btn.disabled = true;
+        charEl.textContent = '';
+        resultEl.classList.remove('visible');
+        resultEl.style.display = 'none';
+        hideError();
+    }
+
+    /* ── Error ───────────────────────────────────────── */
+    function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+    }
+
+    function hideError() {
+        errorEl.style.display = 'none';
+    }
+
+    /* ── Analyse ─────────────────────────────────────── */
+    async function analyse() {
+        const text = input.value.trim();
+        if (text.length < 5) return;
+
+        btn.disabled = true;
+        spinner.style.display = 'block';
+        resultEl.classList.remove('visible');
+        resultEl.style.display = 'none';
+        hideError();
+
+        try {
+            const res = await fetch(`${API_BASE}/predict`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text, return_probabilities: true})
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.detail || `Server responded with ${res.status}`);
+            }
+
+            const data = await res.json();
+            renderResult(data);
+            pushHistory(data, text);
+
+        } catch (e) {
+            const isNetwork = e.message.includes('fetch') || e.message.includes('Failed') || e.message.includes('NetworkError');
+            showError(isNetwork
+                ? `Cannot reach the API at ${API_BASE}. Make sure uvicorn is running.`
+                : `Error: ${e.message}`
+            );
+        } finally {
+            spinner.style.display = 'none';
+            btn.disabled = false;
+        }
+    }
+
+    /* ── Render result ───────────────────────────────── */
+    function renderResult(data) {
+        const posPct = Math.round(
+            (data.positive_probability !== null && data.positive_probability !== undefined)
+                ? data.positive_probability * 100
+                : (data.sentiment === 'positive' ? data.confidence : 1 - data.confidence) * 100
+        );
+        const negPct = 100 - posPct;
+        const conf = Math.round(data.confidence * 100);
+
+        /* Verdict */
+        const verdict = document.getElementById('verdict-label');
+        verdict.textContent = data.sentiment === 'positive' ? 'Positive' : 'Negative';
+        verdict.className = `verdict-label ${data.sentiment}`;
+
+        document.getElementById('confidence-pill').textContent = `${conf}% confident`;
+
+        /* Bars — set to 0 first, then animate */
+        document.getElementById('pos-bar').style.width = '0%';
+        document.getElementById('neg-bar').style.width = '0%';
+        document.getElementById('pos-pct').textContent = posPct + '%';
+        document.getElementById('neg-pct').textContent = negPct + '%';
+
+        resultEl.style.display = 'block';
+        resultEl.classList.add('visible');
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                document.getElementById('pos-bar').style.width = posPct + '%';
+                document.getElementById('neg-bar').style.width = negPct + '%';
+            });
+        });
+
+        /* Preprocessed */
+        document.getElementById('preprocessed-text').textContent =
+            data.preprocessed_text || '(empty after preprocessing)';
+    }
+
+    /* ── History ─────────────────────────────────────── */
+    function pushHistory(data, rawText) {
+        history.unshift({
+            text: rawText.slice(0, 90) + (rawText.length > 90 ? '…' : ''),
+            sentiment: data.sentiment,
+            conf: Math.round(data.confidence * 100)
+        });
+        if (history.length > 6) history.pop();
+        renderHistory();
+    }
+
+    function renderHistory() {
+        histPanel.style.display = 'block';
+        histList.innerHTML = history.map((h, i) => `
+        <div class="history-row" role="listitem" onclick="reloadHistory(${i})" title="Click to reload">
+          <span class="history-text">${escHtml(h.text)}</span>
+          <span class="history-badge ${h.sentiment}">${h.sentiment} · ${h.conf}%</span>
+        </div>
+      `).join('');
+    }
+
+    function reloadHistory(i) {
+        const full = history[i].text.endsWith('…')
+            ? history[i].text          /* truncated — can't recover */
+            : history[i].text;
+        input.value = full;
+        input.dispatchEvent(new Event('input'));
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function escHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /* ── API health check ────────────────────────────── */
+    async function checkHealth() {
+        const dot = document.getElementById('status-dot');
+        const text = document.getElementById('status-text');
+        try {
+            const res = await fetch(`${API_BASE}/health`, {signal: AbortSignal.timeout(3000)});
+            if (res.ok) {
+                dot.classList.add('online');
+                text.textContent = 'api online';
+            } else {
+                throw new Error('not ok');
+            }
+        } catch {
+            dot.classList.remove('online');
+            text.textContent = 'api offline';
+        }
+    }
+
+    checkHealth();
+    setInterval(checkHealth, 30_000);
+</script>
+</body>
+</html>
