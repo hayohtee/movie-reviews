@@ -132,3 +132,28 @@ A single-page front-end is included in the `web/` directory. To use it:
 - **ML / Data** — scikit-learn, NLTK, NumPy, Joblib
 - **API** — FastAPI, Pydantic, Uvicorn
 - **Front-end** — Vanilla HTML / CSS / JavaScript
+
+---
+
+## Dataset Citation
+
+The training data used in this project requires the following citation:
+
+> Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan Huang, Andrew Y. Ng, and Christopher Potts. 2011.
+> **Learning Word Vectors for Sentiment Analysis.**
+> In *Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies*,
+> pages 142–150, Portland, Oregon, USA. Association for Computational Linguistics.
+
+```bibtex
+@InProceedings{maas-EtAl:2011:ACL-HLT2011,
+  author    = {Maas, Andrew L.  and  Daly, Raymond E.  and  Pham, Peter T.  and  Huang, Dan  and  Ng, Andrew Y.  and  Potts, Christopher},
+  title     = {Learning Word Vectors for Sentiment Analysis},
+  booktitle = {Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies},
+  month     = {June},
+  year      = {2011},
+  address   = {Portland, Oregon, USA},
+  publisher = {Association for Computational Linguistics},
+  pages     = {142--150},
+  url       = {http://www.aclweb.org/anthology/P11-1015}
+}
+```
