@@ -1,3 +1,20 @@
+"""FastAPI application for movie review sentiment analysis.
+
+This module exposes a REST API that loads a pre-trained scikit-learn
+pipeline (TF-IDF + SGDClassifier) and serves sentiment predictions
+for individual or batched movie reviews.
+
+Run the server with::
+
+    uvicorn main:app --reload
+
+Endpoints:
+    GET  /health         – Liveness / readiness check.
+    GET  /model/info     – Metadata about the loaded pipeline.
+    POST /predict        – Classify a single review.
+    POST /predict/batch  – Classify up to 100 reviews in one call.
+"""
+
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -10,12 +27,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import HealthResult, ModelInfo, SentimentResult, ReviewRequest, BatchResult, BatchRequest
 
 MODEL_STORE: dict = {}
+"""Runtime store holding the loaded model and its metadata (populated at startup)."""
 
 MODEL_PATH = Path("models/movie_reviews.joblib")
+"""Path to the serialised scikit-learn pipeline on disk."""
 
 
 def load_model():
-    """Load the trained model"""
+    """Deserialise the trained pipeline from :data:`MODEL_PATH`.
+
+    Returns:
+        sklearn.pipeline.Pipeline: The loaded model pipeline ready for
+        inference.
+
+    Raises:
+        FileNotFoundError: If the joblib file does not exist at the
+            expected path.
+    """
     if MODEL_PATH.exists():
         return joblib.load(MODEL_PATH)
 
@@ -23,6 +51,21 @@ def load_model():
 
 
 def predict_review(text: str, return_probs: bool) -> SentimentResult:
+    """Run inference on a single review string.
+
+    The function delegates to the pipeline stored in :data:`MODEL_STORE`,
+    extracts class probabilities and the preprocessed token string, and
+    packages everything into a :class:`SentimentResult`.
+
+    Args:
+        text: Raw review text to classify.
+        return_probs: If ``True``, include per-class probabilities in the
+            response; otherwise those fields are set to ``None``.
+
+    Returns:
+        SentimentResult: Predicted sentiment, confidence, optional
+        probabilities, processing time, and preprocessed text.
+    """
     t0 = time.perf_counter()
     model = MODEL_STORE["model"]
 
@@ -46,6 +89,16 @@ def predict_review(text: str, return_probs: bool) -> SentimentResult:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Application lifespan manager — loads the model on startup and clears it on shutdown.
+
+    On startup the serialised pipeline is loaded into :data:`MODEL_STORE`
+    together with a UTC timestamp.  On shutdown the store is cleared to
+    free memory.
+
+    Raises:
+        FileNotFoundError: Propagated from :func:`load_model` if the
+            model file is missing.
+    """
     try:
         MODEL_STORE["model"] = load_model()
         MODEL_STORE["loaded_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -78,6 +131,7 @@ app.add_middleware(
 
 @app.get("/health", response_model=HealthResult, tags=["System"])
 def health():
+    """Return the API health status, whether the model is loaded, and the app version."""
     return HealthResult(
         status="ok",
         model_loaded="model" in MODEL_STORE,
@@ -87,7 +141,14 @@ def health():
 
 @app.get("/model/info", response_model=ModelInfo, tags=["System"])
 def model_info():
-    """Return metadata about the loaded model"""
+    """Return metadata about the loaded model.
+
+    Reports the pipeline type, vectoriser & classifier class names,
+    load timestamp, and readiness status.
+
+    Raises:
+        HTTPException: 503 if the model has not been loaded.
+    """
     if "model" not in MODEL_STORE:
         raise HTTPException(status_code=503, detail="Model not loaded.")
     model = MODEL_STORE["model"]
@@ -102,7 +163,14 @@ def model_info():
 
 @app.post("/predict", response_model=SentimentResult, tags=["Prediction"])
 def predict(request: ReviewRequest):
-    """Predict sentiment for a single movie review."""
+    """Predict sentiment for a single movie review.
+
+    Accepts a JSON body with a ``text`` field (min 5 characters) and an
+    optional ``return_probabilities`` flag.
+
+    Raises:
+        HTTPException: 503 if the model has not been loaded.
+    """
     if "model" not in MODEL_STORE:
         raise HTTPException(status_code=503, detail="Model not loaded.")
     return predict_review(request.text, request.return_probabilities)
@@ -110,7 +178,15 @@ def predict(request: ReviewRequest):
 
 @app.post("/predict/batch", response_model=BatchResult, tags=["Prediction"])
 def predict_batch(request: BatchRequest):
-    """Predict sentiment for up to 100 reviews in one call."""
+    """Predict sentiment for up to 100 reviews in one call.
+
+    Iterates over the list of review strings, classifies each one, and
+    returns per-review results together with aggregate counts and total
+    processing time.
+
+    Raises:
+        HTTPException: 503 if the model has not been loaded.
+    """
     if "model" not in MODEL_STORE:
         raise HTTPException(status_code=503, detail="Model not loaded.")
 
