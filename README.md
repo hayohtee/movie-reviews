@@ -14,7 +14,6 @@ movie-reviews/
 ├── main.py                  # FastAPI application (prediction endpoints)
 ├── models.py                # Pydantic request / response schemas
 ├── preprocess.py            # Text preprocessing transformer (tokenization, lemmatisation, stop-word removal)
-├── helpers.py               # Utility helpers
 ├── movie_reviews.ipynb      # Jupyter notebook — EDA, training, evaluation
 ├── pyproject.toml           # Project metadata & dependencies
 ├── uv.lock                  # Locked dependency versions
