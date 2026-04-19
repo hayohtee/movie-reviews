@@ -7,6 +7,15 @@ browser-based front-end for interactive use.
 
 ---
 
+## Live Demo
+
+| Resource       | Link                                                                                          |
+|----------------|-----------------------------------------------------------------------------------------------|
+| Web App     | [hayohtee.github.io/movie-reviews](https://hayohtee.github.io/movie-reviews/)                |
+| Backend API | [Swagger UI (Docs)](https://olamilekan-akintilebo-movie-reviews.hf.space/docs)                |
+
+---
+
 ## Project Layout
 
 ```
