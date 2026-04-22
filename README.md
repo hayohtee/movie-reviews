@@ -48,9 +48,10 @@ movie-reviews/
 
 | Metric    | Score  |
 |-----------|--------|
-| Accuracy  | 0.8812 |
-| Precision | 0.8813 |
-| Recall    | 0.8809 |
+| Accuracy  | 0.8757 |
+| Precision | 0.8706 |
+| Recall    | 0.8826 |
+| F1        | 0.8765 |
 
 > Full training & evaluation steps are documented in
 > [`movie_reviews.ipynb`](movie_reviews.ipynb).
